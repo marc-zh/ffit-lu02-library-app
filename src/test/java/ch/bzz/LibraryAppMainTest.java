@@ -4,9 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
-import java.sql.SQLException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,7 +24,7 @@ class LibraryAppMainTest {
     }
 
     @Test
-    void testInvalidCommandContainsInput() throws SQLException, IOException {
+    void testInvalidCommandContainsInput() {
         // Arrange
         var outStream = prepareStreams("foobar\nquit\n");
 
@@ -37,7 +38,7 @@ class LibraryAppMainTest {
     }
 
     @Test
-    void testHelpCommandContainsHelpAndQuit() throws SQLException, IOException {
+    void testHelpCommandContainsHelpAndQuit() {
         // Arrange
         var outStream = prepareStreams("help\nquit\n");
 
@@ -48,10 +49,12 @@ class LibraryAppMainTest {
         var consoleOutput = outStream.toString();
         assertTrue(consoleOutput.contains("help"), "Output should contain 'help'");
         assertTrue(consoleOutput.contains("quit"), "Output should contain 'quit'");
+        assertTrue(consoleOutput.contains("listBooks"), "Output should contain 'listBooks'");
+        assertTrue(consoleOutput.contains("importBooks"), "Output should contain 'importBooks'");
     }
 
     @Test
-    void testListBooksPrintsExampleBooks() throws SQLException, IOException {
+    void testListBooksPrintsExampleBooks() {
         // Arrange
         var out = prepareStreams("listBooks\nquit\n");
 
@@ -60,11 +63,29 @@ class LibraryAppMainTest {
 
         // Assert
         var output = out.toString();
-        System.err.println(output);
-        assertTrue(output.contains("Java ist auch eine Insel"),
-                "Output should contain the title of the first book");
-        assertTrue(output.contains("Grundkurs Java"), "Output should contain the title of the second book");
+        assertTrue(output.contains("Effective Java"), "Output should contain the title of the first book");
+        assertTrue(output.contains("Head First Java"), "Output should contain the title of the second book");
     }
+
+    @Test
+    void testImportBooksImportsFromCsv() throws URISyntaxException {
+        // Arrange
+        var resourceUrl = getClass().getClassLoader().getResource("test_books_import.tsv");
+        assertNotNull(resourceUrl, "Test resource file should exist");
+        Path filePath = Paths.get(resourceUrl.toURI());
+        var out = prepareStreams("importBooks " + filePath + "\nlistBooks\nquit\n");
+
+        // Act
+        LibraryAppMain.main(new String[]{});
+
+        // Assert
+        String output = out.toString();
+
+        assertTrue(output.contains("Domain-Driven Design"), "Output should contain imported book title");
+        assertTrue(output.contains("Refactoring"), "Output should contain imported book title");
+        assertTrue(output.contains("Clean Architecture"), "Output should contain imported book title");
+    }
+
 
     private ByteArrayOutputStream prepareStreams(String input) {
         var in = new ByteArrayInputStream(input.getBytes());
