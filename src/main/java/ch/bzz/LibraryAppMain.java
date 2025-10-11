@@ -2,7 +2,7 @@ package ch.bzz;
 
 import java.util.Scanner;
 
-public class LibraryApp {
+public class LibraryAppMain {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
